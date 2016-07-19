@@ -11,6 +11,7 @@
 #include <errno.h>
 #include "server.h"
 
+
 char recv_osg_file[BUFFER_SIZE_FILE]; //osg文件大小
 
 int recv_File(int *client_sockfd) {
