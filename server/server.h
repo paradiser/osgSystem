@@ -16,7 +16,7 @@ using namespace std;
 #define MAX_CONNECTION 10 // 最大连接客户端个数
 #define OPERATION_NUMBER 10 //操作数
 #define BYTES_PER_TRANS 100000
-#define osg_file_name "/home/paradiser/desktop/recv.osg"
+#define osg_file_name "/home/wsj/files/osgFiles/recvOsg/recv.osg"
 
 
 class PickHandler : public osgGA::GUIEventHandler 
@@ -34,4 +34,5 @@ protected :
 int recv_File(int *client_sockfd);
 int send_Image(int *client_sockfd);
 int get_Viewer(int *client_sockfd);
+int create_screenshot();
 #endif

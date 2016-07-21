@@ -115,9 +115,16 @@ void * server_data_thread_function(void *arg) {
     printf("close server data socket!\n");
     printf("exit process thread!\n");
     pthread_exit((void*)"thread exit");
-    
-
 }
+
+void * create_screenshot_thread_function(void *arg) {
+	create_screenshot();
+    //关线程
+    printf("exit process thread!\n");
+    pthread_exit((void*)"thread exit");
+}
+
+
 int get_Viewer(int *client_sockfd) {
 	/*
     osgViewer::Viewer viewer; 
@@ -134,6 +141,7 @@ int get_Viewer(int *client_sockfd) {
 	
 	//接收客户端已创建data线程的响应
 	recv(*client_sockfd , recvMsg , sizeof(recvMsg) , 0);
+	printf("%s\n" , recvMsg);
     //122 ~ 160创建新的sendImage的线程
 	
     int data_sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -168,6 +176,14 @@ int get_Viewer(int *client_sockfd) {
     	printf("connect client data socket success\n");
   	}
 
+  	pthread_t c_thread;
+  	if(pthread_create(&c_thread, NULL, create_screenshot_thread_function, (void *) NULL) != 0){
+    	printf("create server data thread error\n");
+    	return -1;
+  	}else {
+    	printf("create server data thread success\n");
+  	}
+
   	pthread_t r_thread;
   	if(pthread_create(&r_thread, NULL, server_data_thread_function, (void *) & data_sockfd) != 0){
     	printf("create server data thread error\n");
@@ -194,6 +210,7 @@ int get_Viewer(int *client_sockfd) {
   		sprintf(sendMsg , "received data!");
   		send(*client_sockfd , sendMsg , sizeof(sendMsg) , 0);
   		if(event_Array[1] == 65307)
+  			pthread_exit(&c_thread);
   			break;
   	}
   	return 0;

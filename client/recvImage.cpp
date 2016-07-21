@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <sys/file.h>
 #include <errno.h>
 #include "client.h"
 
@@ -17,7 +18,7 @@ char recv_osg_image[BUFFER_SIZE_FILE]; //osgImage大小
 
 int recv_Image(int *client_sockfd , int CNT) {
 	
-	char osg_image_name[BUFFER_SIZE] = "/home/paradiser/desktop/recvImage/recv_image";
+	char osg_image_name[BUFFER_SIZE] = "/home/wsj/files/osgFiles/recvImage/recv_image";
 	int t = CNT % 1001;
     char a[BUFFER_SIZE];
     memset(a , 0 , sizeof(a));
@@ -28,7 +29,8 @@ int recv_Image(int *client_sockfd , int CNT) {
     	t = t / 10;
     }
     strcat(osg_image_name , a);
-	//printf("%s\n" , osg_image_name);
+    strcat(osg_image_name , ".png");
+    //printf("%s\n" , osg_image_name);
     char sendMsg[BUFFER_SIZE];
     char recvMsg[BUFFER_SIZE];
     int RET = 0;
@@ -50,6 +52,7 @@ int recv_Image(int *client_sockfd , int CNT) {
     //memcpy(&cnt , recvMsg , sizeof(cnt));
     printf("lSize: %d  BYTES_PER_SEND: %d\n" , lSize , BYTES_PER_TRANS);
 	printf("CNT: %d\n" , cnt);
+
     FILE* fp = fopen(osg_image_name, "w");
     if(NULL == fp) {
         printf("File:\t%s Can Not Open To Write\n", osg_image_name);
@@ -92,8 +95,8 @@ int recv_Image(int *client_sockfd , int CNT) {
     //接收osgImage并写入本地
     printf("count: %d  recvSize: %d\n\n" , cnt + 1 , RET);
     if(fwrite(recv_osg_image, sizeof(char), RET, fp) < RET){
-            printf("File: %s write failed", recv_osg_image);
-        }
+        printf("File: %s write failed", recv_osg_image);
+    }
     fclose(fp);
     //printf("data: \n%s\n" , recv_osg_file);
     sprintf(sendMsg , "Client has received your osg image!\n");
