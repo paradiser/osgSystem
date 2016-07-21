@@ -184,7 +184,7 @@ int get_Viewer(int *client_sockfd) {
   	recv(*client_sockfd , recvMsg , sizeof(recvMsg) , 0);
     osgViewer::Viewer viewer; 
     osg::ref_ptr<osg::Group> root = new osg::Group(); 
-    root ->addChild(osgDB::readNodeFile("/home/paradiser/download/OpenSceneGraph-Data/cow.osg")); 
+    root ->addChild(osgDB::readNodeFile("/home/wsj/files/osgFiles/recvOsg/recv.osg")); 
     viewer.setSceneData(root.get ());
     viewer.addEventHandler(new PickHandler(client_sockfd)) ; 
     viewer.realize(); 

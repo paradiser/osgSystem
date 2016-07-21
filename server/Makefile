@@ -1,4 +1,4 @@
-CSRCS= sendImage.cpp recvFile.cpp getViewer.cpp server.cpp
+CSRCS= createScreenshot.cpp sendImage.cpp recvFile.cpp getViewer.cpp server.cpp
 
 CFLAGS =  -c -O3 -DNDEBUG -fPIC
 

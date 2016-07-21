@@ -9,9 +9,10 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <errno.h>
+#include <sys/file.h>
 #include "server.h"
 
-#define osg_image_path "/home/paradiser/download/OpenSceneGraph-Data/Images/blueFlowers.png"
+#define osg_image_path "/home/wsj/files/osgFiles/sendImage/capture.png"
 
 char osg_image[BUFFER_SIZE_FILE]; //osgImage大小
 
@@ -32,32 +33,40 @@ int send_Image(int *client_sockfd) {
         recv(*client_sockfd , recvMsg , sizeof(recvMsg) , 0);
         return -1;
     }
-    //获取文件大小
-    fseek (fp , 0 , SEEK_END);  
-    int lSize = ftell (fp);  
-    rewind (fp);
-    printf("Bytes of The osg image: %d\n" , lSize);
-    
-    //每次传BYTE_PER_TRANS字节，传cnt + 1次
-    send(*client_sockfd , (char *)&lSize , sizeof(int) , 0);
-    recv(*client_sockfd , recvMsg , sizeof(recvMsg) , 0);
-    int cnt = lSize / BYTES_PER_TRANS;
-    for(int i=0; i<cnt; i++) {
-        fread(osg_image, sizeof(char) , BYTES_PER_TRANS, fp);
-        int tmp = send(*client_sockfd , osg_image , BYTES_PER_TRANS , 0);
-        printf("count: %d  sendSize: %d\n" , i + 1 , tmp);
+    if(0 == flock(fileno(fp), LOCK_SH))
+    {
+        printf("locked\n");
+        //获取文件大小
+        fseek (fp , 0 , SEEK_END);  
+        int lSize = ftell (fp);
+        rewind (fp);
+        printf("Bytes of The osg image: %d\n" , lSize);
+        
+        //每次传BYTE_PER_TRANS字节，传cnt + 1次
+        send(*client_sockfd , (char *)&lSize , sizeof(int) , 0);
         recv(*client_sockfd , recvMsg , sizeof(recvMsg) , 0);
+        int cnt = lSize / BYTES_PER_TRANS;
+        for(int i=0; i<cnt; i++) {
+            fread(osg_image, sizeof(char) , BYTES_PER_TRANS, fp);
+            int tmp = send(*client_sockfd , osg_image , BYTES_PER_TRANS , 0);
+            printf("count: %d  sendSize: %d\n" , i + 1 , tmp);
+            recv(*client_sockfd , recvMsg , sizeof(recvMsg) , 0);
+        }
+        fread(osg_image, sizeof(char) , lSize - cnt * BYTES_PER_TRANS, fp);
+        int tmp = send(*client_sockfd , osg_image , lSize - cnt * BYTES_PER_TRANS , 0);
+        printf("count: %d  sendSize: %d\n" , cnt + 1 , tmp);
+        flock(fileno(fp), LOCK_UN);
+        fclose(fp);
+        //fread(osg_file , sizeof(char) , sizeof(char)*lSize , fp);
+        //printf("osg_file: %s\n" , osg_file);
+        //int tmp = send(client_sockfd , osg_file , sizeof(char)*lSize , 0);
+        //printf("sendSize: %d\n" , tmp);
     }
-    fread(osg_image, sizeof(char) , lSize - cnt * BYTES_PER_TRANS, fp);
-    int tmp = send(*client_sockfd , osg_image , lSize - cnt * BYTES_PER_TRANS , 0);
-    printf("count: %d  sendSize: %d\n" , cnt + 1 , tmp);
-    
-    //fread(osg_file , sizeof(char) , sizeof(char)*lSize , fp);
-    //printf("osg_file: %s\n" , osg_file);
-    //int tmp = send(client_sockfd , osg_file , sizeof(char)*lSize , 0);
-    //printf("sendSize: %d\n" , tmp);
-
-    fclose(fp);
+     else
+    {
+        printf("lock failed\n");
+        fclose(fp);
+    }
     //send(client_sockfd , osg_file_path , sizeof(osg_file_path) , 0);
     recv(*client_sockfd , recvMsg , sizeof(recvMsg) , 0);
     printf("%s",recvMsg);
