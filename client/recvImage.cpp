@@ -11,10 +11,24 @@
 #include <errno.h>
 #include "client.h"
 
-#define osg_image_name "/home/paradiser/desktop/recv_image"
+
+
 char recv_osg_image[BUFFER_SIZE_FILE]; //osgImage大小
 
-int recv_Image(int *client_sockfd) {
+int recv_Image(int *client_sockfd , int CNT) {
+	
+	char osg_image_name[BUFFER_SIZE] = "/home/paradiser/desktop/recvImage/recv_image";
+	int t = CNT % 1001;
+    char a[BUFFER_SIZE];
+    memset(a , 0 , sizeof(a));
+    int idx = 0;
+    while(t > 0) {
+    	int tmp = t % 10;
+    	a[idx++] = tmp + '0';
+    	t = t / 10;
+    }
+    strcat(osg_image_name , a);
+	//printf("%s\n" , osg_image_name);
     char sendMsg[BUFFER_SIZE];
     char recvMsg[BUFFER_SIZE];
     int RET = 0;
@@ -57,8 +71,9 @@ int recv_Image(int *client_sockfd) {
         }
         //接收osgImage并写入本地
         printf("count: %d  recvSize: %d\n" , i + 1 , RET);
+        
         if(fwrite(recv_osg_image, sizeof(char), RET, fp) < RET){
-            printf("File: %s write failed", osg_image_name);
+            printf("File: %s write failed", recv_osg_image);
         }
         INDEX += RET;
         sprintf(sendMsg , "Received");
@@ -77,8 +92,8 @@ int recv_Image(int *client_sockfd) {
     //接收osgImage并写入本地
     printf("count: %d  recvSize: %d\n\n" , cnt + 1 , RET);
     if(fwrite(recv_osg_image, sizeof(char), RET, fp) < RET){
-        printf("File: %s write failed\n", osg_image_name);
-    }
+            printf("File: %s write failed", recv_osg_image);
+        }
     fclose(fp);
     //printf("data: \n%s\n" , recv_osg_file);
     sprintf(sendMsg , "Client has received your osg image!\n");

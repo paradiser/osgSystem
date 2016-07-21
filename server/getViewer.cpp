@@ -131,6 +131,8 @@ int get_Viewer(int *client_sockfd) {
 	memset(event_Array , -1 ,sizeof(event_Array));
 	char recvMsg[BUFFER_SIZE];
 	char sendMsg[BUFFER_SIZE];
+	
+	//接收客户端已创建data线程的响应
 	recv(*client_sockfd , recvMsg , sizeof(recvMsg) , 0);
     //122 ~ 160创建新的sendImage的线程
 	
@@ -174,6 +176,8 @@ int get_Viewer(int *client_sockfd) {
     	printf("create server data thread success\n");
   	}
 	
+	//向客户端发送已创建server data 线程的消息
+	send(*client_sockfd , sendMsg , sizeof(sendMsg) , 0);
   	//获取客户端事件响应
   	int RET = 0;
   	while(1) {

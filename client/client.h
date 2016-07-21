@@ -33,6 +33,6 @@ protected :
 };
 
 int send_File(int client_sockfd);
-int recv_Image(int *client_sockfd);
+int recv_Image(int *client_sockfd , int cnt);
 int get_Viewer(int *client_sockfd);
 #endif
