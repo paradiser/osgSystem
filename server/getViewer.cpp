@@ -12,6 +12,8 @@
 #include <errno.h>
 
 float event_Array[4];
+volatile bool capture_screenshot_lock_flag = false;
+volatile bool send_image_lock_flag = false;
 
 void PickHandler::getMessage()
 {
@@ -21,76 +23,80 @@ void PickHandler::getMessage()
 }
 bool PickHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) 
 { 
-		osgViewer::Viewer *viewer = dynamic_cast<osgViewer::Viewer*>(&aa);
-		if(!viewer)
-			return false;
-		switch(ea.getEventType()) 
-		{ 
-				
-			case(osgGA::GUIEventAdapter::KEYDOWN):
-			{
-					pickArray[0]=osgGA::GUIEventAdapter::KEYDOWN;
-					pickArray[1]=ea.getKey();
-					pickArray[2]=(ea.getXmin()+ea.getXmax())*0.5;
-				    pickArray[3]=(ea.getYmin()+ea.getYmax())*0.5;
-					getMessage();
-				return false;
-				break;
-			}
-			case(osgGA::GUIEventAdapter::KEYUP):
-			{
-					pickArray[0]=osgGA::GUIEventAdapter::KEYUP;
-					pickArray[1]=ea.getKey();
-					pickArray[2]=(ea.getXmin()+ea.getXmax())*0.5;
-				    pickArray[3]=(ea.getYmin()+ea.getYmax())*0.5;
-					getMessage();
-				return false;
-				break;
-			}
-			case(osgGA::GUIEventAdapter::RESIZE):
-			{
-				pickArray[0]=ea.getEventType();
-				pickArray[1]=0;
-				pickArray[2]=ea.getWindowWidth();
-				pickArray[3]=ea.getWindowHeight();
-				getMessage();
-				return true; 
-				break;
-			}
-			case(osgGA::GUIEventAdapter::CLOSE_WINDOW):
-			{
-				pickArray[0]=ea.getEventType();
-				pickArray[1]=0;
-				pickArray[2]=0;
-				pickArray[3]=0;
-				getMessage();
-				return true; 
-				break;
-			}
-			case(osgGA::GUIEventAdapter::QUIT_APPLICATION):
-			{
-				pickArray[0]=ea.getEventType();
-				pickArray[1]=0;
-				pickArray[2]=0;
-				pickArray[3]=0;
-				getMessage();
-				return true; 
-				break;
-			}
+	osgViewer::Viewer *viewer = dynamic_cast<osgViewer::Viewer*>(&aa);
+	if(!viewer)
+		return false;
+	switch(ea.getEventType()) 
+	{ 
 			
-			default :
-			{
-				pickArray[0]=ea.getEventType();
-				pickArray[1]=ea.getButton();
-				pickArray[2]=ea.getX();
-				pickArray[3]=ea.getY(); 
+		case(osgGA::GUIEventAdapter::KEYDOWN):
+		{
+				pickArray[0]=osgGA::GUIEventAdapter::KEYDOWN;
+				pickArray[1]=ea.getKey();
+				pickArray[2]=(ea.getXmin()+ea.getXmax())*0.5;
+			    pickArray[3]=(ea.getYmin()+ea.getYmax())*0.5;
 				getMessage();
-				return true; 
-				break;
-			}
-		} 
-		return false;  
-} 
+			return false;
+			break;
+		}
+		case(osgGA::GUIEventAdapter::KEYUP):
+		{
+				pickArray[0]=osgGA::GUIEventAdapter::KEYUP;
+				pickArray[1]=ea.getKey();
+				pickArray[2]=(ea.getXmin()+ea.getXmax())*0.5;
+			    pickArray[3]=(ea.getYmin()+ea.getYmax())*0.5;
+				getMessage();
+			return false;
+			break;
+		}
+		case(osgGA::GUIEventAdapter::RESIZE):
+		{
+			pickArray[0]=ea.getEventType();
+			pickArray[1]=0;
+			pickArray[2]=ea.getWindowWidth();
+			pickArray[3]=ea.getWindowHeight();
+			getMessage();
+			return true; 
+			break;
+		}
+		case(osgGA::GUIEventAdapter::CLOSE_WINDOW):
+		{
+			pickArray[0]=ea.getEventType();
+			pickArray[1]=0;
+			pickArray[2]=0;
+			pickArray[3]=0;
+			getMessage();
+			return true; 
+			break;
+		}
+		case(osgGA::GUIEventAdapter::QUIT_APPLICATION):
+		{
+			pickArray[0]=ea.getEventType();
+			pickArray[1]=0;
+			pickArray[2]=0;
+			pickArray[3]=0;
+			getMessage();
+			return true; 
+			break;
+		}
+		
+		default :
+		{
+			pickArray[0]=ea.getEventType();
+			pickArray[1]=ea.getButton();
+			pickArray[2]=ea.getX();
+			pickArray[3]=ea.getY(); 
+			getMessage();
+			return true; 
+			break;
+		}
+	}
+	return false;  
+}
+
+float * PickHandler::getPickArray() {
+	return pickArray;
+}
 
 void * server_data_thread_function(void *arg) {
 	int * data_sockfd = (int *) arg;
@@ -99,7 +105,11 @@ void * server_data_thread_function(void *arg) {
     while(1) {
         cnt ++;
     	send_Image(data_sockfd);
-        if(event_Array[1] == 65307) {
+    	capture_screenshot_lock_flag = true;
+    	send_image_lock_flag = false;
+    	while(send_image_lock_flag == false) {}
+    	
+        if(event_Array[1] == ESCAPE_NUM) {
             send(*data_sockfd , "close" , 111 , 0);
             recv(*data_sockfd , recvMsg , sizeof(recvMsg) , 0);
             break;
@@ -117,7 +127,7 @@ void * server_data_thread_function(void *arg) {
 }
 
 void * create_screenshot_thread_function(void *arg) {
-	create_screenshot(event_Array);
+	create_screenshot(event_Array, &capture_screenshot_lock_flag, &send_image_lock_flag);
     //关线程
     printf("exit cs process thread!\n");
     pthread_exit((void*)"thread exit");
@@ -208,7 +218,7 @@ int get_Viewer(int *client_sockfd) {
   		printf("\n");
   		sprintf(sendMsg , "received data!");
   		send(*client_sockfd , sendMsg , sizeof(sendMsg) , 0);
-  		if(event_Array[1] == 65307) {
+  		if(event_Array[1] == ESCAPE_NUM) {
 //			pthread_cancel(c_thread);//c_thread
 //			pthread_cancel(c_thread);
 //			printf("wojiaotacancelledanshibuzhidaoyoumeiyouchenggong\n");

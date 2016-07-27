@@ -8,12 +8,17 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/file.h>
+#include "server.h"
 using namespace std;
 
 class finalDraw : public osg::Camera::DrawCallback//相机更新回调类
 {
 public:	 
-	finalDraw() {_image = new osg::Image; }//构造函数，分配私有图片类变量内存
+	finalDraw(volatile bool * capture_screenshot_lock_flag_in, volatile bool * send_image_lock_flag_in) {
+		_image = new osg::Image;
+		_capture_screenshot_lock_flag_in = capture_screenshot_lock_flag_in;
+		_send_image_lock_flag_in = send_image_lock_flag_in;
+	}//构造函数，分配私有图片类变量内存
 	~finalDraw() {
 
 	}
@@ -29,9 +34,9 @@ public:
 		char name[] = "../files/sendImage/capture.png";
 		osgDB::writeImageFile(*_image, _name);//图片写入到当前程序目录下
 		int c;
+		while(_capture_screenshot_lock_flag_in == false) {}
 		FILE *fpSrc, *fpDest;  //定义两个指向文件的指针
 		fpSrc = fopen(_name, "rb");
-		printf("file_no_fpSrc: %d\n", fileno(fpSrc));
 		if(fpSrc==NULL){
 			printf( "_capture.png open failure.");  //源文件不存在的时候提示错误
 			exit(0);
@@ -41,7 +46,14 @@ public:
 			printf("capture.png open failure.");
 			exit(0);
 		}
-		if(0 == flock(fileno(fpDest), LOCK_EX))
+		while((c=fgetc(fpSrc))!=EOF){  //从源文件中读取数据知道结尾
+			fputc(c, fpDest);
+		}
+		fclose(fpSrc);  //关闭文件指针，释放内存
+		fclose(fpDest);
+		* _capture_screenshot_lock_flag_in = false;
+		* _send_image_lock_flag_in = true;
+/*		if(0 == flock(fileno(fpDest), LOCK_EX))
 	    {
 	        printf("capture.png locked.\n");
 			while((c=fgetc(fpSrc))!=EOF){  //从源文件中读取数据知道结尾
@@ -59,11 +71,15 @@ public:
 	    }
 		printf("Captured!\n");
 	}
+*/
+	}
 protected:	 
 	osg::ref_ptr<osg::Image> _image;//图片变量
+	volatile bool * _capture_screenshot_lock_flag_in;
+	volatile bool * _send_image_lock_flag_in;
 //	mutable OpenThreads::Mutex _mutex;//线程保护对象变量
 };
-int create_screenshot(float * event_Array)
+int create_screenshot(float * event_Array, volatile bool * capture_screenshot_lock_flag_in, volatile bool * send_image_lock_flag_in)
 {
 //	osg::ref_ptr<osgViewer::Viewer> viewer = new osgViewer::Viewer;
 	osgViewer::Viewer viewer;//创建视图类，实现建立窗口等操作
@@ -82,13 +98,13 @@ int create_screenshot(float * event_Array)
 		if(!once && (viewer.elapsedTime()>0) )//没有执行且时间大于5秒，执行下现语句
 		{
 			once = true;//相机更新回调已经执行
-			osg::ref_ptr<finalDraw> finaldraw = new finalDraw;
+			osg::ref_ptr<finalDraw> finaldraw = new finalDraw(capture_screenshot_lock_flag_in, send_image_lock_flag_in);
 			viewer.getCamera()->setFinalDrawCallback(finaldraw);//加入更新回调，输出图像
 		}
-		if(event_Array[0] == 32 && event_Array[1] == 65307){
-			printf("viewer.done()\n");
+		if(event_Array[1] == ESCAPE_NUM){
 			break;
 		}
 	}
+	printf("viewer.done()\n");
 	return 0;
 }

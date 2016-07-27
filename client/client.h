@@ -19,7 +19,7 @@ using namespace std;
 #define MAX_CONNECTION 10 // 最大连接客户端个数
 #define OPERATION_NUMBER 10 //操作数
 #define BYTES_PER_TRANS 100000
-
+#define ESCAPE_NUM 65293
 class PickHandler : public osgGA::GUIEventHandler 
 { 
 public:
@@ -28,6 +28,7 @@ public:
 	//处理（事件接口、动作接口）
     bool handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAdapter& aa);
 	void getMessage();
+	float *getpickArray();
 protected :
 	float pickArray[4];//事件键值，键码（鼠标默认0），X,Y坐标
     int *client_sockfd;
@@ -36,4 +37,5 @@ protected :
 int send_File(int client_sockfd);
 int recv_Image(int *client_sockfd , int cnt);
 int get_Viewer(int *client_sockfd);
+int copyFile(char *name , char *osg_image_name);
 #endif

@@ -6,9 +6,12 @@
 #include <osg/Group> 
 #include <osgGA/GUIEventHandler> 
 #include <osgUtil/LineSegmentIntersector> 
+#include <osgGA/StateSetManipulator>
+#include <osgGA/TrackballManipulator>
 #include <iostream>
 using namespace std;
 
+#define CLIENT_PORT 9988
 #define SERVER_PORT 36677
 #define CLIENT_DATA_PORT 8888
 #define BUFFER_SIZE 1024 /// 控制命令缓冲区大小
@@ -16,25 +19,23 @@ using namespace std;
 #define MAX_CONNECTION 10 // 最大连接客户端个数
 #define OPERATION_NUMBER 10 //操作数
 #define BYTES_PER_TRANS 100000
-#define ESCAPE_NUM 65293
-#define osg_file_name "../files/recvOsg/recv.osg"
-
 
 class PickHandler : public osgGA::GUIEventHandler 
 { 
 public:
-	PickHandler(){};
+	PickHandler(int *sockfd);
 	~PickHandler(){}
-	//´¦Àí£¨ÊÂ¼þ½Ó¿Ú¡¢¶¯×÷½Ó¿Ú£©
+	//处理（事件接口、动作接口）
     bool handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAdapter& aa);
 	void getMessage();
-	float * getPickArray();
+	float *getpickArray();
 protected :
-	float pickArray[4];//ÊÂ¼þ¼üÖµ£¬¼üÂë£¨Êó±êÄ¬ÈÏ0£©£¬X,Y×ø±ê
+	float pickArray[4];//事件键值，键码（鼠标默认0），X,Y坐标
+    int *client_sockfd;
 };
 
-int recv_File(int *client_sockfd);
-int send_Image(int *client_sockfd);
+int send_File(int client_sockfd);
+int recv_Image(int *client_sockfd , int cnt);
 int get_Viewer(int *client_sockfd);
-int create_screenshot(float *event_Array, volatile bool * capture_screenshot_lock_flag_in, volatile bool * send_image_lock_flag_in);
+int copyFile(char *name , char *osg_image_name);
 #endif

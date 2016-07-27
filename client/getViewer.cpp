@@ -15,16 +15,26 @@
 #include "client.h"
 using namespace std;
 
+
 PickHandler::PickHandler(int *sockfd) {
 
 	client_sockfd = sockfd;
 }
+
+float * PickHandler::getpickArray() {
+
+	return pickArray;
+}
+
 void PickHandler::getMessage()
 {
-	//for(int i=0;i<3;i++)
-	//	cout<<pickArray[i]<<"  ";
-	//cout<<pickArray[3]<<endl;
-	char recvMsg[BUFFER_SIZE];
+/*	for(int i=0;i<3;i++)
+		cout<<pickArray[i]<<"  ";
+	cout<<pickArray[3]<<endl;
+*//*	if(pickArray[0] == 32 | pickArray[0]) {
+		printf("Esc pressed! : 65307\n");
+	}
+*/	char recvMsg[BUFFER_SIZE];
 	send(*client_sockfd , (char *)&pickArray , sizeof(pickArray) , 0);
 	recv(*client_sockfd , recvMsg , sizeof(recvMsg) , 0);
 	printf("%s\n" , recvMsg);
@@ -108,7 +118,8 @@ bool PickHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapt
 		return false;  
 } 
 
-bool lock_flag = false;
+volatile bool read_image_lock_flag = false; // false: can not read
+volatile bool write_image_lock_flag = false;// false: can not write
 
 void * data_thread_function(void *arg) {
 	int data_sockfd, client_data_sockfd;
@@ -153,9 +164,11 @@ void * data_thread_function(void *arg) {
 	while(1) {
 		cnt ++;
   		if(recv_Image(data_sockfd_tmp , cnt) == 0) {
-  			lock_flag = true;
-            printf("getViewer line 157: lock_flag is %d\n" , lock_flag);
-  		}
+  			write_image_lock_flag = false;
+  			read_image_lock_flag = true;
+//			printf("getViewer line 157: read_image_lock_flag is %d\n" , read_image_lock_flag);
+			while(write_image_lock_flag == false) {}
+		}
 		recv(*data_sockfd_tmp , recvMsg , sizeof(recvMsg) , 0);
 	   // printf("%d: %s\n" , cnt, recvMsg);
 		send(*data_sockfd_tmp , "continue" , sizeof(recvMsg) , 0);
@@ -169,8 +182,6 @@ void * data_thread_function(void *arg) {
 	printf("close client data socket!\n");
 	printf("exit process thread!\n");
 	pthread_exit((void*)"thread exit");
-	
-
 }
 
 int get_Viewer(int *client_sockfd) {
@@ -189,61 +200,64 @@ int get_Viewer(int *client_sockfd) {
 		send(*client_sockfd , "create data thread success" , 111 , 0);
   	}
   	recv(*client_sockfd , recvMsg , sizeof(recvMsg) , 0);
-  	long long idx = 0;
   	//阻塞进程，避免读图片先于写图片
-    int lock_flag_new = 0;
-  	while(lock_flag_new == 0) {
-  		idx ++;
-  		if(idx % 1000000 == 0) {
-  			idx = 0;
-            lock_flag_new = (int)lock_flag;
-  			printf("client_getViewer line 196: lock_flag is %d\n" , lock_flag);
-  		}
-  	}
-  	//printf("getViewer line 196 : here\n");
+  	while(read_image_lock_flag == false) {}
 	osgViewer::Viewer viewer; 
 	osg::ref_ptr<osg::DrawPixels> bmp = new osg::DrawPixels;
 	bmp->setPosition(osg::Vec3(0.0f, 0.0f, 0.0f));
-	char image_file_path[BUFFER_SIZE] = "../files/recv_image.png";
-	FILE* fp = fopen(image_file_path, "r");
+	char image_file_path[BUFFER_SIZE] = "../files/recvImage/recv_image.png";
+	FILE *fp = NULL;
+	bmp->setImage(osgDB::readImageFile(image_file_path));
+	write_image_lock_flag = true;
+	read_image_lock_flag = false;
+	/*fp = fopen(image_file_path, "rb");
 	if(0 == flock(fileno(fp), LOCK_EX)) {
-		printf("client_getViewer line 191: locked!\n");
+		printf("getViewer line 207: Lock()\n");
 		bmp->setImage(osgDB::readImageFile(image_file_path));
 		flock(fileno(fp), LOCK_UN);
+		printf("getViewer line 210: unLock()\n");
 		fclose(fp);
 	} else {
-		printf("client_getViewer line 196: lock failed\n");
-        fclose(fp);
-	}
+		printf("client_getViewer line 223: lock failed\n");
+		fclose(fp);
+	}*/
+	osg::ref_ptr<osg::Group> root = new osg::Group;
 	osg::ref_ptr<osg::Geode> geode = new osg::Geode;
 	geode->addDrawable(bmp.get());
-	viewer.setSceneData(geode.get());
+	root->addChild(geode.get());
+	viewer.setSceneData(root.get());
 	viewer.setCameraManipulator(new osgGA::TrackballManipulator());
-	viewer.addEventHandler(new PickHandler(client_sockfd)) ; 
-	osg::Matrix trans;
-	trans.makeTranslate( -4.f, -4.f, -12.f );
+	osg::ref_ptr<PickHandler> eventPickHandler = new PickHandler(client_sockfd);
+	viewer.addEventHandler(eventPickHandler) ; 
 	// 旋转一定角度(弧度值)。 
 	viewer.realize();
+	osg::Matrix trans;
+	trans.makeTranslate( -1, -1, 0);
 	double angle( 0. );
 	//开始渲染
 	while (!viewer.done())
 	{
 		// 创建旋转矩阵。
+		bmp = new osg::DrawPixels;
 		osg::Matrix rot;
-		rot.makeRotate( angle, osg::Vec3( 1., 4., 4. ) );
+		rot.makeRotate( angle, osg::Vec3( 0, 0, 0 ) );
 		angle += 0.01;
 		// 设置视口矩阵(旋转矩阵和平移矩阵连乘)
-		viewer.getCamera()->setViewMatrix( rot * trans );
-		fp = fopen(image_file_path, "r");
-		if(0 == flock(fileno(fp), LOCK_EX)) {
-			printf("client_getViewer line 220: locked!\n");
-//			bmp->setImage(osgDB::readImageFile(image_file_path));
-			flock(fileno(fp), LOCK_UN);
-			fclose(fp);
-		} else {
-			printf("client_getViewer line 223: lock failed\n");
-	        fclose(fp);
+		viewer.getCamera()->setProjectionMatrix(rot * trans );
+		root->removeChild(geode);
+		while(read_image_lock_flag == false){
+			if(*(eventPickHandler->getpickArray() + 1) == ESCAPE_NUM)
+				return 0;
 		}
+	  	bmp->setImage(osgDB::readImageFile(image_file_path));
+	  	write_image_lock_flag = true;
+	  	read_image_lock_flag = false;
+		
+		/*osg::ref_ptr<osg::Geode>*/ geode = new osg::Geode;
+		geode->addDrawable(bmp.get());
+		viewer.setSceneData(geode.get());
+		viewer.getCamera()->setViewMatrix( rot * trans );
+
 		//geode->addDrawable(bmp.get());
 		//viewer.setSceneData(geode.get());
 		//viewer.realize();

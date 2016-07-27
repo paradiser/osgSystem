@@ -71,7 +71,7 @@ int send_Image(int *client_sockfd) {
 			printf("sendImage.cpp line 71: lSize = 0\n");
 			flock(fileno(fp), LOCK_UN);
 			fclose(fp);
-			return 0;
+			return -1;
 		}
 		int cnt = lSize / BYTES_PER_TRANS;
 		for(int i=0; i<cnt; i++) {
@@ -97,6 +97,6 @@ int send_Image(int *client_sockfd) {
 	}
 	//send(client_sockfd , osg_file_path , sizeof(osg_file_path) , 0);
 	recv(*client_sockfd , recvMsg , sizeof(recvMsg) , 0);
-	printf("%s",recvMsg);
+	printf("%s\n",recvMsg);
 	return 0;
 }
