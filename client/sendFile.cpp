@@ -10,7 +10,7 @@
 #include <errno.h>
 #include "client.h"
 
-int a = 1;
+
 char osg_file[BUFFER_SIZE_FILE]; //osg文件大小
 
 int send_File(int client_sockfd) {

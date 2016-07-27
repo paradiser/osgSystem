@@ -39,6 +39,7 @@ void * thread_function(void * arg) {
             }
             case 2: {
             	get_Viewer(client_sockfd);
+                printf("get_Viewer() finished!\n");
                 break;
             }
             default : {

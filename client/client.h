@@ -7,6 +7,7 @@
 #include <osgGA/GUIEventHandler> 
 #include <osgUtil/LineSegmentIntersector> 
 #include <osgGA/StateSetManipulator>
+#include <osgGA/TrackballManipulator>
 #include <iostream>
 using namespace std;
 

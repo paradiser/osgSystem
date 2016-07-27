@@ -30,7 +30,7 @@ int main() {
     struct sockaddr_in server_address;
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(SERVER_PORT);
-    server_address.sin_addr.s_addr = inet_addr("192.168.0.137");
+    server_address.sin_addr.s_addr = inet_addr("192.168.0.133");
 	
 	//设置close()后无需TIME_WAIT
 	bool bDontLinger = false;

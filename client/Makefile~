@@ -1,5 +1,5 @@
-CSRCS= md5.cpp createScreenshot.cpp sendImage.cpp recvFile.cpp getViewer.cpp server.cpp
-
+CSRCS=md5.cpp sendFile.cpp recvImage.cpp getViewer.cpp client.cpp
+ 
 CFLAGS =  -c -O3 -DNDEBUG -fPIC
 
 INCLUDE = -I. -I/usr/include/ -I/usr/include/X11/ -I/usr/local/include/GL 
@@ -12,7 +12,7 @@ COBJS=$(patsubst %.cpp,%.o,$(CSRCS))
 
 CC = g++
 
-EXE=server
+EXE=client
 
 all: $(EXE)
 
@@ -26,3 +26,9 @@ $(COBJS): %.o : %.cpp
 clean:
 	rm -f *.o
 	rm -f *~
+
+rmv:
+	cd ../files/recvImage/
+	rm -f *.png
+	cd ../files/originalImage/
+	rm -f *.png

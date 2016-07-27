@@ -1,4 +1,4 @@
-CSRCS=sendFile.cpp recvImage.cpp getViewer.cpp client.cpp
+CSRCS=md5.cpp sendFile.cpp recvImage.cpp getViewer.cpp client.cpp
  
 CFLAGS =  -c -O3 -DNDEBUG -fPIC
 
@@ -26,5 +26,3 @@ $(COBJS): %.o : %.cpp
 clean:
 	rm -f *.o
 	rm -f *~
-	
-

@@ -1,4 +1,3 @@
-
 #include "server.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -118,9 +117,9 @@ void * server_data_thread_function(void *arg) {
 }
 
 void * create_screenshot_thread_function(void *arg) {
-	create_screenshot();
+	create_screenshot(event_Array);
     //关线程
-    printf("exit process thread!\n");
+    printf("exit cs process thread!\n");
     pthread_exit((void*)"thread exit");
 }
 
@@ -209,9 +208,12 @@ int get_Viewer(int *client_sockfd) {
   		printf("\n");
   		sprintf(sendMsg , "received data!");
   		send(*client_sockfd , sendMsg , sizeof(sendMsg) , 0);
-  		if(event_Array[1] == 65307)
-  			pthread_exit(&c_thread);
+  		if(event_Array[1] == 65307) {
+//			pthread_cancel(c_thread);//c_thread
+//			pthread_cancel(c_thread);
+//			printf("wojiaotacancelledanshibuzhidaoyoumeiyouchenggong\n");
   			break;
+  		}
   	}
   	return 0;
 }
