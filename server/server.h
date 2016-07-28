@@ -17,6 +17,7 @@ using namespace std;
 #define OPERATION_NUMBER 10 //操作数
 #define BYTES_PER_TRANS 100000
 #define ESCAPE_NUM 65293
+#define IMAGE_FORMAT ".jpg"
 #define osg_file_name "../files/recvOsg/recv.osg"
 
 
@@ -30,7 +31,29 @@ public:
 	void getMessage();
 	float * getPickArray();
 protected :
-	float pickArray[4];//ÊÂ¼þ¼üÖµ£¬¼üÂë£¨Êó±êÄ¬ÈÏ0£©£¬X,Y×ø±ê
+	float pickArray[5];//ÊÂ¼þ¼üÖµ£¬¼üÂë£¨Êó±êÄ¬ÈÏ0£©£¬X,Y×ø±ê
+};
+
+class PickInfoHandler : public osgGA::GUIEventHandler
+{
+public:
+	PickInfoHandler(float * event_Array);	//¹¹Ôìº¯Êýº¬³õÊ¼»¯
+	virtual bool handle( const osgGA::GUIEventAdapter& ea,
+		osgGA::GUIActionAdapter& aa );//ÖØÔØÊÂ¼þ´¦Àíº¯Êý
+	void PrintInfo();	//´òÓ¡²âÊÔº¯Êý
+//	bool CopyInfo(float pickInfo[5]);	//¿½±´ÐÅÏ¢º¯Êý
+	void ClearInfo();	//Çå¿Õº¯Êý£¬ÒÑÍê³ÉÏìÓ¦
+	int getPick(int n);	//»ñÈ¡ÐÅÏ¢µÄµÚnÎ»Êý¾Ý
+	bool getSignal();	//»ñÈ¡ÐÅÏ¢½ÓÊÕ±êÖ¾
+protected:
+	float * pickArray;
+	bool _signalInfo;
+};
+
+struct UserInfo : public osg::Referenced //ÓÃ»§×Ô¶¨ÒåÊÂ¼þ
+{
+	UserInfo( unsigned int c ) : _count(c) {}//¹¹Ôìº¯Êý
+	unsigned int _count;
 };
 
 int recv_File(int *client_sockfd);

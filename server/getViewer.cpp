@@ -11,92 +11,170 @@
 #include <pthread.h>
 #include <errno.h>
 
-float event_Array[4];
+float event_Array[5];
 volatile bool capture_screenshot_lock_flag = false;
 volatile bool send_image_lock_flag = false;
 
 void PickHandler::getMessage()
 {
-	for(int i=0;i<3;i++)
-		cout<<pickArray[i]<<"  ";
-	cout<<pickArray[3]<<endl;
+	for(int i=0;i<4;i++)
+		std::cout<<"\t"<<pickArray[i];
+	std::cout<<"\t"<<pickArray[4]<<std::endl;
 }
 bool PickHandler::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& aa) 
 { 
-	osgViewer::Viewer *viewer = dynamic_cast<osgViewer::Viewer*>(&aa);
-	if(!viewer)
-		return false;
-	switch(ea.getEventType()) 
-	{ 
+		osgViewer::Viewer *viewer = dynamic_cast<osgViewer::Viewer*>(&aa);
+		if(!viewer)
+			return false;
+		switch(ea.getEventType()) 
+		{ 
+			case(osgGA::GUIEventAdapter::KEYDOWN):
+			{
+					pickArray[0]=osgGA::GUIEventAdapter::KEYDOWN;
+					pickArray[1]=ea.getKey();
+					pickArray[2]=ea.getUnmodifiedKey();
+				    pickArray[3]=0;
+					pickArray[4]=ea.getTime();
+					getMessage();
+				return false;
+				break;
+			}
+			case(osgGA::GUIEventAdapter::KEYUP):
+			{
+					pickArray[0]=osgGA::GUIEventAdapter::KEYUP;
+					pickArray[1]=ea.getKey();
+					pickArray[2]=ea.getUnmodifiedKey();
+				    pickArray[3]=0;
+					pickArray[4]=ea.getTime();
+					getMessage();
+				return false;
+				break;
+			}
+			case(osgGA::GUIEventAdapter::RESIZE):
+			{
+				pickArray[0]=ea.getEventType();
+				pickArray[1]=0;
+				pickArray[2]=ea.getWindowWidth();
+				pickArray[3]=ea.getWindowHeight();
+				pickArray[4]=ea.getTime();
+				getMessage();
+				return true; 
+				break;
+			}
+			case(osgGA::GUIEventAdapter::CLOSE_WINDOW):
+			{
+				pickArray[0]=ea.getEventType();
+				pickArray[1]=0;
+				pickArray[2]=0;
+				pickArray[3]=0;
+				pickArray[4]=ea.getTime();
+				getMessage();
+				return true; 
+				break;
+			}
+			case(osgGA::GUIEventAdapter::QUIT_APPLICATION):
+			{
+				pickArray[0]=ea.getEventType();
+				pickArray[1]=0;
+				pickArray[2]=0;
+				pickArray[3]=0;
+				pickArray[4]=ea.getTime();
+				getMessage();
+				return true; 
+				break;
+			}
+			case(osgGA::GUIEventAdapter::FRAME):
+			{
+				pickArray[0]=ea.getEventType();
+				pickArray[1]=0;
+				pickArray[2]=0;
+				pickArray[3]=0;
+				pickArray[4]=ea.getTime();
+				return true; 
+				break;
+			}
+			case(osgGA::GUIEventAdapter::PEN_PRESSURE):
+			{
+				pickArray[0]=ea.getEventType();
+				pickArray[1]=ea.getPenPressure();
+				pickArray[2]=0;
+				pickArray[3]=0;
+				pickArray[4]=ea.getTime();
+				return true; 
+				break;
+			}
+			case(osgGA::GUIEventAdapter::PEN_ORIENTATION):
+			{
+				pickArray[0]=ea.getEventType();
+				pickArray[1]=ea.getPenRotation();
+				pickArray[2]=ea.getPenTiltX();
+				pickArray[3]=ea.getPenTiltY();
+				pickArray[4]=ea.getTime();
+				return true; 
+				break;
+			}
+			case(osgGA::GUIEventAdapter::PEN_PROXIMITY_ENTER):
+			{
+				pickArray[0]=ea.getEventType();
+				pickArray[1]=ea.getTabletPointerType();
+				pickArray[2]=0;
+				pickArray[3]=0;
+				pickArray[4]=ea.getTime();
+				return true; 
+				break;
+			}
 			
-		case(osgGA::GUIEventAdapter::KEYDOWN):
-		{
-				pickArray[0]=osgGA::GUIEventAdapter::KEYDOWN;
-				pickArray[1]=ea.getKey();
-				pickArray[2]=(ea.getXmin()+ea.getXmax())*0.5;
-			    pickArray[3]=(ea.getYmin()+ea.getYmax())*0.5;
+			case(osgGA::GUIEventAdapter::PEN_PROXIMITY_LEAVE):
+			{
+				pickArray[0]=ea.getEventType();
+				pickArray[1]=ea.getTabletPointerType();
+				pickArray[2]=0;
+				pickArray[3]=0;
+				pickArray[4]=ea.getTime();
+				return true; 
+				break;
+			}
+			case(osgGA::GUIEventAdapter::SCROLL):
+			{
+				pickArray[0]=ea.getEventType();
+				pickArray[1]=ea.getScrollingMotion();
+				pickArray[2]=ea.getX();
+				pickArray[3]=ea.getY(); 
+				pickArray[4]=ea.getTime();
 				getMessage();
-			return false;
-			break;
-		}
-		case(osgGA::GUIEventAdapter::KEYUP):
-		{
-				pickArray[0]=osgGA::GUIEventAdapter::KEYUP;
-				pickArray[1]=ea.getKey();
-				pickArray[2]=(ea.getXmin()+ea.getXmax())*0.5;
-			    pickArray[3]=(ea.getYmin()+ea.getYmax())*0.5;
+				return true; 
+				break;
+			}
+			case(osgGA::GUIEventAdapter::DRAG):
+			{
+				pickArray[0]=ea.getEventType();
+				pickArray[1]=ea.getButtonMask();
+				pickArray[2]=ea.getX();
+				pickArray[3]=ea.getY(); 
+				pickArray[4]=ea.getTime();
 				getMessage();
-			return false;
-			break;
-		}
-		case(osgGA::GUIEventAdapter::RESIZE):
-		{
-			pickArray[0]=ea.getEventType();
-			pickArray[1]=0;
-			pickArray[2]=ea.getWindowWidth();
-			pickArray[3]=ea.getWindowHeight();
-			getMessage();
-			return true; 
-			break;
-		}
-		case(osgGA::GUIEventAdapter::CLOSE_WINDOW):
-		{
-			pickArray[0]=ea.getEventType();
-			pickArray[1]=0;
-			pickArray[2]=0;
-			pickArray[3]=0;
-			getMessage();
-			return true; 
-			break;
-		}
-		case(osgGA::GUIEventAdapter::QUIT_APPLICATION):
-		{
-			pickArray[0]=ea.getEventType();
-			pickArray[1]=0;
-			pickArray[2]=0;
-			pickArray[3]=0;
-			getMessage();
-			return true; 
-			break;
-		}
-		
-		default :
-		{
-			pickArray[0]=ea.getEventType();
-			pickArray[1]=ea.getButton();
-			pickArray[2]=ea.getX();
-			pickArray[3]=ea.getY(); 
-			getMessage();
-			return true; 
-			break;
-		}
-	}
-	return false;  
+				return true; 
+				break;
+			}
+			default :
+			{
+				pickArray[0]=ea.getEventType();
+				pickArray[1]=ea.getButton();
+				pickArray[2]=ea.getX();
+				pickArray[3]=ea.getY(); 
+				pickArray[4]=ea.getTime();
+				getMessage();
+				return true; 
+				break;
+			}
+		} 
+		return false; 
 }
 
 float * PickHandler::getPickArray() {
 	return pickArray;
 }
+
 
 void * server_data_thread_function(void *arg) {
 	int * data_sockfd = (int *) arg;

@@ -13,12 +13,14 @@
 #include "server.h"
 #include "md5.h"
 
-#define osg_image_path "../files/sendImage/capture.png"
-#define _osg_image_path "../files/sendImage/_capture.png"
-
 char osg_image[BUFFER_SIZE_FILE]; //osgImage大小
 
 int send_Image(int *client_sockfd) {
+	char osg_image_path[BUFFER_SIZE] = "../files/sendImage/capture";
+	strcat(osg_image_path, IMAGE_FORMAT);
+	char _osg_image_path[BUFFER_SIZE] = "../files/sendImage/_capture";
+	strcat(_osg_image_path, IMAGE_FORMAT);
+
 	char recvMsg[BUFFER_SIZE];
 	char replyMsg[BUFFER_SIZE];
 	//char osg_image_path[BUFFER_SIZE]; //osgImage路径
