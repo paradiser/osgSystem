@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
- 
+
 #define F(x, y, z) (((x) & (y)) | ((~x) & (z)))
 #define G(x, y, z) (((x) & (z)) | ((y) & (~z)))
 #define H(x, y, z) ((x) ^ (y) ^ (z))
@@ -23,6 +23,6 @@
 
 void md5();
 
-int CalcFileMD5(char *filename, char *md5_sum);
+int CalcFileMD5(FILE *fp, char *md5_sum);
 
 #endif

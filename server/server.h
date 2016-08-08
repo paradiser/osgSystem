@@ -50,14 +50,27 @@ protected:
 	bool _signalInfo;
 };
 
+class finalDraw : public osg::Camera::DrawCallback//相机更新回调类
+{
+public:	 
+	finalDraw(volatile bool * capture_screenshot_lock_flag_in, volatile bool * send_image_lock_flag_in, int screenshot_cnt);
+	/*virtual*/ void operator () (osg::RenderInfo& renderInfo) const;
+protected:	 
+	osg::ref_ptr<osg::Image> _image;//图片变量
+	volatile bool * _capture_screenshot_lock_flag_in;
+	volatile bool * _send_image_lock_flag_in;
+	int _screenshot_cnt;
+//	mutable OpenThreads::Mutex _mutex;//线程保护对象变量
+};
+
 struct UserInfo : public osg::Referenced //ÓÃ»§×Ô¶¨ÒåÊÂ¼þ
 {
 	UserInfo( unsigned int c ) : _count(c) {}//¹¹Ôìº¯Êý
 	unsigned int _count;
 };
 
-int recv_File(int *client_sockfd);
-int send_Image(int *client_sockfd);
-int get_Viewer(int *client_sockfd);
-int create_screenshot(float *event_Array, volatile bool * capture_screenshot_lock_flag_in, volatile bool * send_image_lock_flag_in);
+int recv_file(int *client_sockfd);
+int send_image(int *client_sockfd, int screenshot_cnt);
+int get_viewer(int *client_sockfd, int screenshot_cnt);
+int create_screenshot(float *event_Array, volatile bool * capture_screenshot_lock_flag_in, volatile bool * send_image_lock_flag_in, int screenshot_cnt);
 #endif

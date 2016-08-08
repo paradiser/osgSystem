@@ -14,7 +14,7 @@
 
 char recv_osg_file[BUFFER_SIZE_FILE]; //osg文件大小
 
-int recv_File(int *client_sockfd) {
+int recv_file(int *client_sockfd) {
     char sendMsg[BUFFER_SIZE];
     char recvMsg[BUFFER_SIZE];
     int RET = 0;

@@ -1,15 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <signal.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <sys/file.h>
-#include <errno.h>
 #include "client.h"
 #include "md5.h"
 
@@ -61,8 +49,10 @@ int recv_Image(int *client_sockfd , int CNT) {
 	char sendMsg[BUFFER_SIZE];
 	char recvMsg[BUFFER_SIZE];
 	char cntString[BUFFER_SIZE];
-	char name[BUFFER_SIZE] = "../files/recvImage/recv_image.png"; //复制到recvImage内
-	char osg_image_name[BUFFER_SIZE] = "../files/originalImage/recv_image.png";//从server端接收的源图片
+	char name[BUFFER_SIZE] = "../files/recvImage/recv_image"; //复制到recvImage内
+	strcat(name , IMAGE_FORMAT);
+	char osg_image_name[BUFFER_SIZE] = "../files/originalImage/recv_image";//从server端接收的源图片
+	strcat(osg_image_name , IMAGE_FORMAT);
 	/*int t = CNT % 1001;
 	memset(cntString , 0 , sizeof(cntString));
 	int idx = 0;
@@ -106,7 +96,6 @@ int recv_Image(int *client_sockfd , int CNT) {
 		fclose(fp);
 		return -1;
 	}
-	
 	//连续recv，直到recv完整数据
 	int INDEX = 0; 
 	//0 ~ cnt - 1
@@ -123,7 +112,6 @@ int recv_Image(int *client_sockfd , int CNT) {
 		}
 		//接收osgImage并写入本地
 		//printf("count: %d  recvSize: %d\n" , i + 1 , RET);
-		
 		if(fwrite(recv_osg_image, sizeof(char), RET, fp) < RET){
 			printf("File: %s write failed", recv_osg_image);
 		}
@@ -150,13 +138,11 @@ int recv_Image(int *client_sockfd , int CNT) {
 	fclose(fp);
 	//sprintf(sendMsg , "Client has received your osg image!\n");
 	send(*client_sockfd , sendMsg , sizeof(sendMsg) , 0);
-	
 	//MD5 judge
 	if(!CalcFileMD5(osg_image_name, fileMD5))
 		puts("Error occured!");
 	else
 		//printf("Success! MD5 sum is :%s \n", fileMD5);
-
 	if(strcmp(sourceMD5 , fileMD5) != 0) {
 		printf("client_recvImage line 159: MD5 not equal!\n");
 		return -1;
@@ -164,5 +150,6 @@ int recv_Image(int *client_sockfd , int CNT) {
 	//复制到另一个文件
 	if(copyFile(name , osg_image_name) == -1)
 		return -1;
+	//printf("recvImage line 169: copyed!\n");
 	return 0;
 }

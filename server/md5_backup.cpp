@@ -87,17 +87,16 @@ void md5()
  
 }
  
-int CalcFileMD5(FILE *fp, char *md5_sum)
+int CalcFileMD5(char *filename, char *md5_sum)
 {
-/*	if (filename[0]==34) filename[strlen(filename)-1]=0,strcpy(filename,filename+1);
+	if (filename[0]==34) filename[strlen(filename)-1]=0,strcpy(filename,filename+1);
 	if (!strcmp(filename,"exit")) exit(0);
-//	printf("CalcFileMD5:filename == %s\n", filename);
 	if (!(fp=fopen(filename,"rb"))) //
 	{
 		printf("Can not open this file!\n");
 		return 0;
 	}
-*/	printf("CalcFileMD5:opend, fp_address == %lx\n", fp);
+	printf("CalcFileMD5:fp_address == %lx\n", fp);
 	fseek(fp, 0, SEEK_END);
 	if((len=ftell(fp))==-1)
 	{
@@ -121,9 +120,7 @@ int CalcFileMD5(FILE *fp, char *md5_sum)
 	if(len%64>55) md5(),memset(x,0,64);
 	memcpy(x+14,flen,8);
 	md5();
-	printf("CalcFileMD5:about to close %s\n", filename);
-//	fclose(fp);
-	rewind(fp);
+	fclose(fp);
 	sprintf(md5_sum,"%08x%08x%08x%08x",PP(A),PP(B),PP(C),PP(D));
 return 1;
 }

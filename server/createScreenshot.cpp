@@ -8,10 +8,11 @@
 #include <osgViewer/ViewerEventHandlers>
 #include <osgGA/StateSetManipulator>
 //#include <OpenThreads>
+#include <string>
+#include <sstream>
 #include <GL/gl.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 #include <sys/file.h>
 #include "server.h"
@@ -49,12 +50,12 @@ bool PickInfoHandler::getSignal()
 }
 bool PickInfoHandler::handle( const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAdapter& aa )
 {
-	osgViewer::Viewer* viewer =dynamic_cast<osgViewer::Viewer*>(&aa);
-	if ( viewer )			
+	osgViewer::Viewer * viewer = dynamic_cast<osgViewer::Viewer*>(&aa);
+	if ( viewer )
 	{
 		if(this->getSignal()==false)
 		{
-			
+		
 			switch(this->getPick(0))
 			{
 			case 1:		//PUSHÊó±êÄ³¼ü°´ÏÂ
@@ -146,90 +147,98 @@ bool PickInfoHandler::handle( const osgGA::GUIEventAdapter& ea,osgGA::GUIActionA
 	return false;
 }
 
-class finalDraw : public osg::Camera::DrawCallback//相机更新回调类
-{
-public:	 
-	finalDraw(volatile bool * capture_screenshot_lock_flag_in, volatile bool * send_image_lock_flag_in) {
-		_image = new osg::Image;
-		_capture_screenshot_lock_flag_in = capture_screenshot_lock_flag_in;
-		_send_image_lock_flag_in = send_image_lock_flag_in;
-	}//构造函数，分配私有图片类变量内存
-	~finalDraw() {
+finalDraw :: finalDraw(volatile bool * capture_screenshot_lock_flag_in, volatile bool * send_image_lock_flag_in, int screenshot_cnt) {
+	_image = new osg::Image;
+	_capture_screenshot_lock_flag_in = capture_screenshot_lock_flag_in;
+	_send_image_lock_flag_in = send_image_lock_flag_in;
+	_screenshot_cnt = screenshot_cnt;
+}//构造函数，分配私有图片类变量内存
 
-	}
-	virtual void operator () (osg::RenderInfo& renderInfo) const//虚函数，实现目的操作
-	{
-//		printf("operator() start!\n");
-		glReadBuffer(GL_BACK);//直接调用OpenGL函数，实现对后缓冲区的读取
+void finalDraw :: operator () (osg::RenderInfo& renderInfo) const//虚函数，实现目的操作
+{
+	printf("operator() start!\n");
+	glReadBuffer(GL_BACK);//直接调用OpenGL函数，实现对后缓冲区的读取
 //		OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);//开启线程保护
-		osg::GraphicsContext* gc = renderInfo.getState()->getGraphicsContext();//获取当前图形上下文
-		int width = gc->getTraits()->width; int height = gc->getTraits()->height;//获取窗口的长宽
-		_image->readPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE);//数据填充到图片
-		char _name[BUFFER_SIZE] = "../files/sendImage/_capture";
-		strcat(_name, IMAGE_FORMAT);
-		char name[BUFFER_SIZE] = "../files/sendImage/capture";
-		strcat(name, IMAGE_FORMAT);
-		osgDB::writeImageFile(*_image, _name);//图片写入到当前程序目录下
-		int c;
-		while(_capture_screenshot_lock_flag_in == false) {}
-		FILE *fpSrc, *fpDest;  //定义两个指向文件的指针
-		fpSrc = fopen(_name, "rb");
-		if(fpSrc==NULL){
-			printf( "_capture.png open failure.");  //源文件不存在的时候提示错误
-			exit(0);
-		}
-		fpDest = fopen(name, "wb");  //以写入二进制的方式打开目标文件
-		if(fpDest==NULL){
-			printf("capture.png open failure.");
-			exit(0);
-		}
+	osg::ref_ptr<osg::GraphicsContext> gc = renderInfo.getState()->getGraphicsContext();//获取当前图形上下文
+	int width = gc->getTraits()->width; int height = gc->getTraits()->height;//获取窗口的长宽
+	_image->readPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE);//数据填充到图片
+/*		char _name[BUFFER_SIZE] = "../files/sendImage/_capture";
+	strcat(_name, IMAGE_FORMAT);
+	char name[BUFFER_SIZE] = "../files/sendImage/capture";
+	strcat(name, IMAGE_FORMAT);
+*/
+	stringstream ss;
+	ss << _screenshot_cnt;
+	string _screenshot_cnt_str = ss.str();
+	string _name = "../files/sendImage/_capture" + _screenshot_cnt_str + IMAGE_FORMAT;
+	string name = "../files/sendImage/capture" + _screenshot_cnt_str + IMAGE_FORMAT;
+	osgDB::writeImageFile(*_image, _name);//图片写入到当前程序目录下
+	int c;
+	printf("createScreenshot():capture_screenshot_lock_flag == t? %d, ", * _capture_screenshot_lock_flag_in);
+	printf("screenshot_cnt = %s\n", _screenshot_cnt_str.c_str());
+	while(* _capture_screenshot_lock_flag_in == false) {
+//		printf("createScreenshot():capture_screenshot_lock_flag == false, ");
+//		printf("screenshot_cnt = %s\n", _screenshot_cnt_str.c_str());
+	}
+	printf("createScreenshot():capture_screenshot_lock_flag == true, %d, ", * _capture_screenshot_lock_flag_in);
+	printf("screenshot_cnt = %s\n", _screenshot_cnt_str.c_str());
+	FILE *fpSrc, *fpDest;  //定义两个指向文件的指针
+
+	fpSrc = fopen(_name.c_str(), "rb");
+	if(fpSrc==NULL){
+		printf( "_capture.png open failure.");  //源文件不存在的时候提示错误
+		exit(0);
+	}
+	fpDest = fopen(name.c_str(), "wb");  //以写入二进制的方式打开目标文件
+	if(fpDest==NULL){
+		printf("capture.png open failure.");
+		exit(0);
+	}
+	while((c=fgetc(fpSrc))!=EOF){  //从源文件中读取数据知道结尾
+		fputc(c, fpDest);
+	}
+	fclose(fpSrc);  //关闭文件指针，释放内存
+	fclose(fpDest);
+	* _capture_screenshot_lock_flag_in = false;
+	* _send_image_lock_flag_in = true;
+	printf("createScreenshot():send_image_lock_flag == true, %d, ", * _send_image_lock_flag_in);
+	printf("screenshot_cnt = %s\n", _screenshot_cnt_str.c_str());
+/*		if(0 == flock(fileno(fpDest), LOCK_EX))
+    {
+        printf("capture.png locked.\n");
 		while((c=fgetc(fpSrc))!=EOF){  //从源文件中读取数据知道结尾
 			fputc(c, fpDest);
 		}
 		fclose(fpSrc);  //关闭文件指针，释放内存
+        flock(fileno(fpDest), LOCK_UN);
 		fclose(fpDest);
-		* _capture_screenshot_lock_flag_in = false;
-		* _send_image_lock_flag_in = true;
-/*		if(0 == flock(fileno(fpDest), LOCK_EX))
-	    {
-	        printf("capture.png locked.\n");
-			while((c=fgetc(fpSrc))!=EOF){  //从源文件中读取数据知道结尾
-				fputc(c, fpDest);
-			}
-			fclose(fpSrc);  //关闭文件指针，释放内存
-	        flock(fileno(fpDest), LOCK_UN);
-			fclose(fpDest);
-	    }
-	    else
-	    {
-	        printf("lock failed\n");
-			fclose(fpDest);
-			fclose(fpSrc);  //关闭文件指针，释放内存
-	    }
-		printf("Captured!\n");
-	}
+    }
+    else
+    {
+        printf("lock failed\n");
+		fclose(fpDest);
+		fclose(fpSrc);  //关闭文件指针，释放内存
+    }
+	printf("Captured!\n");
+}
 */
-	}
-protected:	 
-	osg::ref_ptr<osg::Image> _image;//图片变量
-	volatile bool * _capture_screenshot_lock_flag_in;
-	volatile bool * _send_image_lock_flag_in;
-//	mutable OpenThreads::Mutex _mutex;//线程保护对象变量
-};
-int create_screenshot(float * event_Array, volatile bool * capture_screenshot_lock_flag_in, volatile bool * send_image_lock_flag_in)
+}
+
+int create_screenshot(float * event_Array, volatile bool * capture_screenshot_lock_flag_in, volatile bool * send_image_lock_flag_in, int screenshot_cnt)
 {
 //	osg::ref_ptr<osgViewer::Viewer> viewer = new osgViewer::Viewer;
 	osgViewer::Viewer viewer;//创建视图类，实现建立窗口等操作
-	osg::Node *loadedModel = osgDB::readNodeFile("../files/recvOsg/recv.osg");//应用osgDB文件读写类读入glider模型节点
+	printf("createScreenshot():viewer_address == %lx\n", & viewer);
+	printf("createScreenshot():event_Array_address == %lx\n", event_Array);
+	osg::ref_ptr<osg::Node> loadedModel = osgDB::readNodeFile("../files/recvOsg/recv.osg");//应用osgDB文件读写类读入glider模型节点
+//	printf("loadModel complete!\n");
 	viewer.setSceneData(loadedModel);//为视图类设置场景，即观察glider模型
+//	printf("viewer.setSceneData(loadedModel) complete!\n");
 	viewer.setCameraManipulator( new osgGA::TrackballManipulator() ); //设置视点的操作类，类似Vega Prime的MotionDrive
-	event_Array[0] = 4;
-	event_Array[1] = 4;
-	event_Array[2] = 567;
-	event_Array[3] = 567;
-	event_Array[4] = 0.1;
-	osg::ref_ptr<PickInfoHandler> pickInfo = new PickInfoHandler(event_Array);
-	viewer.addEventHandler(pickInfo);
+//	printf("viewer.setCameraManipulator() complete!\n");
+//	osg::ref_ptr<PickInfoHandler> pickInfo = new PickInfoHandler(event_Array);
+//	viewer.addEventHandler(pickInfo);
+	viewer.addEventHandler(new PickInfoHandler(event_Array));
 	//Ìí¼Ó×´Ì¬ÊÂ¼þ
 	viewer.addEventHandler (new osgGA::StateSetManipulator(viewer.getCamera()->getOrCreateStateSet()) );
 	//´°¿Ú´óÐ¡±ä»¯ÊÂ¼þ 
@@ -242,11 +251,13 @@ int create_screenshot(float * event_Array, volatile bool * capture_screenshot_lo
 
 
 	viewer.realize();//初始化
+//	printf("viewer.realize() complete!\n");
 //	finalDraw * finaldraw = new finalDraw();
 	bool once = false;//控制相机更新回调只加入一次
 	while(!viewer.done())//程序没有终止，如按下Esc键，程序会终止
 	{
 		viewer.frame();//更新一帧
+		printf("first frame()\n");
 		usleep(50000);
 //		printf("viewer.frame()\n");
 //		viewer.getCamera()->setFinalDrawCallback(new finalDraw());//加入更新回调，输出图像
@@ -254,7 +265,10 @@ int create_screenshot(float * event_Array, volatile bool * capture_screenshot_lo
 		if(!once && (viewer.elapsedTime() > 0) )//没有执行且时间大于5秒，执行下现语句
 		{
 			once = true;//相机更新回调已经执行
-			osg::ref_ptr<finalDraw> finaldraw = new finalDraw(capture_screenshot_lock_flag_in, send_image_lock_flag_in);
+			printf("new finaldraw() prepared!\n");
+			osg::ref_ptr<finalDraw> finaldraw = new finalDraw(capture_screenshot_lock_flag_in, send_image_lock_flag_in, screenshot_cnt);
+//			printf("createScreenshot():finaldraw_address == %lx\n", finaldraw);
+			printf("new finaldraw() complete!\n");
 			viewer.getCamera()->setFinalDrawCallback(finaldraw);//加入更新回调，输出图像
 		}
 		if(event_Array[1] == ESCAPE_NUM){

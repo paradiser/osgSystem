@@ -13,25 +13,31 @@
 #include "server.h"
 #include "md5.h"
 
-char osg_image[BUFFER_SIZE_FILE]; //osgImage大小
-
-int send_Image(int *client_sockfd) {
-	char osg_image_path[BUFFER_SIZE] = "../files/sendImage/capture";
+int send_image(int *client_sockfd, int screenshot_cnt) {
+/*	char osg_image_path[BUFFER_SIZE] = "../files/sendImage/capture";
 	strcat(osg_image_path, IMAGE_FORMAT);
 	char _osg_image_path[BUFFER_SIZE] = "../files/sendImage/_capture";
 	strcat(_osg_image_path, IMAGE_FORMAT);
+*/
+	stringstream ss;
+	ss << screenshot_cnt;
+	string screenshot_cnt_str = ss.str();
+	string _osg_image_path = "../files/sendImage/_capture" + screenshot_cnt_str + IMAGE_FORMAT;
+	string osg_image_path = "../files/sendImage/capture" + screenshot_cnt_str + IMAGE_FORMAT;
 
 	char recvMsg[BUFFER_SIZE];
 	char replyMsg[BUFFER_SIZE];
+	char osg_image[BUFFER_SIZE_FILE]; //osgImage大小
+
 	//char osg_image_path[BUFFER_SIZE]; //osgImage路径
 	//recv(client_sockfd , recvMsg , sizeof(recvMsg) , 0);
 	//printf("%s", recvMsg);
 	//scanf("%s" , osg_file_path);
 
 	//读入osgImage
-	FILE* fp = fopen(osg_image_path, "r");
+	FILE* fp = fopen(osg_image_path.c_str(), "r");
 	if(fp == NULL) {
-		printf("Can't Open image %s\n" , osg_image_path);
+		printf("Can't Open image %s\n" , osg_image_path.c_str());
 		sprintf(replyMsg , "failed");
 		send(*client_sockfd , replyMsg , sizeof(replyMsg) , 0);
 		recv(*client_sockfd , recvMsg , sizeof(recvMsg) , 0);
@@ -58,10 +64,11 @@ int send_Image(int *client_sockfd) {
 		}
 */		printf("Bytes of The osg image: %d\n" , lSize);
 
-		if(!CalcFileMD5(osg_image_path, md5_sum))
+//		if(!CalcFileMD5((char *)osg_image_path.c_str(), md5_sum))
+		if(!CalcFileMD5(fp, md5_sum))
 			puts("Error occured!");
 		//else
-		//	printf("Success! MD5 sum is :%s \n", md5_sum);
+//		printf("Success! MD5 sum is :%s \n", md5_sum);
 			
 		//每次传BYTE_PER_TRANS字节，传cnt + 1次
         send(*client_sockfd , md5_sum , sizeof(md5_sum) , 0);

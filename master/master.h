@@ -7,6 +7,7 @@
 #include <osgGA/GUIEventHandler> 
 #include <osgUtil/LineSegmentIntersector> 
 #include <iostream>
+
 using namespace std;
 
 #define MASTER_PORT 6666
@@ -17,22 +18,58 @@ using namespace std;
 #define MAX_CONNECTION 10 // 最大连接客户端个数
 #define BYTES_PER_TRANS 100000
 #define MAX_SERVER_NUM 100 //
+#define SERVER_INFO_PATH "../files/info/serverInfo.csv"
+//#define TASK_INFO_PATH "../files/info/taskInfo.csv"
 
-class serverInfo {
+/*class serverInfo {
 public:
-    serverInfo(int server_num , char server_ip[][BUFFER_SIZE]) ;
-    int getServerCons(int server_id) ;
+    serverInfo();
+*/
+
+vector<vector<string>> readCsv(string filePath);
+string getCsvValue(string filePath, int row, int col);
+int setCsvValue(string filePath, int row, int col, string setValue);
+
+int serverInit();
+int serverInit(int server_num , string server_ip[]);
+string getServerIp(int server_id);
+int getServerId(string ip);
+int getServerConsViaId(int server_id);
+int setServerConsViaId(int server_id, int cons);
+int addServerConsViaId(int server_id);
+int decServerConsViaId(int server_id);
+int getServerConsViaIp(string server_ip);
+int setServerConsViaIp(string server_ip, int cons);
+int addServerConsViaIp(string server_ip);
+int decServerConsViaIp(string server_ip);
+int addServer(string ip);
+int removeServer(int server_id);
+int removeServer(string ip);
+int getServerNum();
+    
+/*protected:
+//  char serverIp[MAX_SERVER_NUM][BUFFER_SIZE];
+//  int serverCons[MAX_SERVER_NUM];
+    int serverNum;
+};
+*/
+/*class taskInfo {
+public:
+    taskInfo();
+	int init();
+	int init(int task_num , char task_server_ip[][BUFFER_SIZE]);
+    int getServerCons(int server_id);
     int addServerCons(int server_id);
     int decServerCons(int server_id);
-    char * getServerIp(int server_id) ;
-    int getServerId(char *ip);
+    char * getServerIp(int server_id);
+    int getServerId(char * ip);
     int getServerNum();
     
 protected:
     char serverIp[MAX_SERVER_NUM][BUFFER_SIZE];
     int serverCons[MAX_SERVER_NUM];
     int serverNum;
-};
+};*/
 
 
 #endif

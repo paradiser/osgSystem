@@ -1,14 +1,29 @@
 #ifndef _SENDFILE_H_
 #define _SENDFILE_H_
 
-#include <osgDB/ReadFile> 
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/file.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <string.h>
+#include <pthread.h>
+#include <errno.h>
+#include <osgDB/ReadFile>
+#include <osg/DrawPixels>
 #include <osgViewer/Viewer> 
 #include <osg/Group> 
 #include <osgGA/GUIEventHandler> 
 #include <osgUtil/LineSegmentIntersector> 
 #include <osgGA/StateSetManipulator>
 #include <osgGA/TrackballManipulator>
-#include <iostream>
+
 using namespace std;
 
 #define CLIENT_PORT 9988
@@ -20,6 +35,7 @@ using namespace std;
 #define OPERATION_NUMBER 10 //操作数
 #define BYTES_PER_TRANS 100000
 #define ESCAPE_NUM 65293
+#define IMAGE_FORMAT ".jpg"
 class PickHandler : public osgGA::GUIEventHandler 
 { 
 public:
@@ -30,7 +46,7 @@ public:
 	void getMessage();
 	float *getpickArray();
 protected :
-	float pickArray[4];//事件键值，键码（鼠标默认0），X,Y坐标
+	float pickArray[5];//事件键值，键码，x，y坐标 
     int *client_sockfd;
 };
 
