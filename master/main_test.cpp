@@ -30,8 +30,17 @@ int main()
 	string server_id[2] = {"192.168.0.137", "192.168.1.114"};
 	serverInit(2, server_id);
 	addServerConsViaId(1);
-	cout << getServerIp(1) << endl;
+/*	cout << getServerIp(1) << endl;
 	cout << getServerConsViaIp("192.168.0.137") << endl;
 	cout << getServerConsViaId(2) << endl;
 	cout << getServerId("192.168.0.137") << endl;
+	addServer("192.168.1.113");
+	removeServer(1);
+	addServer("192.168.1.115");
+	addServer("192.168.1.116");
+	removeServer("192.168.1.113");
+*/
+	cout << getServerWithMinLoad() << endl;
+	serverInit();
+	cout << getServerWithMinLoad() << endl;
 }

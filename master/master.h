@@ -18,7 +18,7 @@ using namespace std;
 #define MAX_CONNECTION 10 // 最大连接客户端个数
 #define BYTES_PER_TRANS 100000
 #define MAX_SERVER_NUM 100 //
-#define SERVER_INFO_PATH "../files/info/serverInfo.csv"
+#define SERVER_INFO_PATH "../files/info/allServerInfo.csv"
 //#define TASK_INFO_PATH "../files/info/taskInfo.csv"
 
 /*class serverInfo {
@@ -26,12 +26,17 @@ public:
     serverInfo();
 */
 
+vector<string> split(string rawString, char spliter);
+string join(vector<string> vec, char joiner);
 vector<vector<string>> readCsv(string filePath);
 string getCsvValue(string filePath, int row, int col);
 int setCsvValue(string filePath, int row, int col, string setValue);
+bool appendInfoToCsv(string filePath, string info);
+bool deleteInfoFromCsv(string filePath, string keyword);
 
 int serverInit();
 int serverInit(int server_num , string server_ip[]);
+int getServerNum();
 string getServerIp(int server_id);
 int getServerId(string ip);
 int getServerConsViaId(int server_id);
@@ -45,7 +50,9 @@ int decServerConsViaIp(string server_ip);
 int addServer(string ip);
 int removeServer(int server_id);
 int removeServer(string ip);
-int getServerNum();
+//int getServerWithMinLoad();
+string getServerWithMinLoad();
+bool IsServerExistent(string ip);
     
 /*protected:
 //  char serverIp[MAX_SERVER_NUM][BUFFER_SIZE];

@@ -118,17 +118,59 @@ int decServerConsViaIp(string server_ip) {
 }
 
 int addServer(string ip) {
+	if(! IsServerExistent(ip)) {
+		int serverNum;
+		serverNum = getServerNum();
+		std::stringstream ss;
+		ss << serverNum + 1;
+		string serverNum_str = ss.str(); //int -> string
+		string info = serverNum_str + "," + ip + ",0,";
+		appendInfoToCsv(SERVER_INFO_PATH, info);
+		ss.str("");
+		ss << serverNum + 1;
+		setCsvValue(SERVER_INFO_PATH, 0, 0, ss.str());
+	}
 	return 0;
 }
 
 int removeServer(int server_id) {
+	std::stringstream ss;
+	ss << server_id;
+	string server_id_str = ss.str();
+	deleteInfoFromCsv(SERVER_INFO_PATH, server_id_str);
+	int serverNum = getServerNum();
+	ss.str("");
+	ss << serverNum - 1;
+	setCsvValue(SERVER_INFO_PATH, 0, 0, ss.str());
+	for(int i = 1; i <= serverNum - 1; i ++) {
+		ss.str("");
+		ss << i;
+		setCsvValue(SERVER_INFO_PATH, i, 0, ss.str());
+	}
 	return 0;
 }
 
 int removeServer(string ip) {
+	removeServer(getServerId(ip));
 	return 0;
 }
 
+string getServerWithMinLoad() {
+	int serverNum = getServerNum();
+	if(serverNum == 0) {
+		string ip = "0";
+		return ip;
+	}
+	else {
+		int serverWithMinLoad = 1;
+		for(int i = 2; i <= serverNum; i ++) {
+			if(getServerConsViaId(i) < getServerConsViaId(serverWithMinLoad)) {
+				serverWithMinLoad = i;
+			}
+		}
+		return getServerIp(serverWithMinLoad);
+	}
+}
 /*int getServerId(char * ip) {
 	for(int i=0; i<getServerNum(); i++) {
 		if(strcmp(getServerIp(i) , ip) == 0)
@@ -137,3 +179,14 @@ int removeServer(string ip) {
 	return -1;
 }
 */
+
+bool IsServerExistent(string ip) {
+	int serverNum;
+	serverNum = getServerNum();
+	for(int i = 1; i <= serverNum; i ++) {
+		if(getServerIp(i) == ip) {
+			return true;
+		}
+	}
+	return false;
+}

@@ -26,8 +26,9 @@
 
 using namespace std;
 
+#define MASTER_PORT 6666
 #define CLIENT_PORT 9988
-#define SERVER_PORT 36677
+#define SERVER_PORT 36699
 #define CLIENT_DATA_PORT 8888
 #define BUFFER_SIZE 1024 /// 控制命令缓冲区大小
 #define BUFFER_SIZE_FILE 1024 * 1024
@@ -36,6 +37,17 @@ using namespace std;
 #define BYTES_PER_TRANS 100000
 #define ESCAPE_NUM 65293
 #define IMAGE_FORMAT ".jpg"
+#define SELF_INFO_PATH "../files/info/selfInfo.csv"
+#define MASTER_INFO_PATH "../files/info/masterInfo.csv"
+
+vector<string> split(string rawString, char spliter);
+string join(vector<string> vec, char joiner);
+vector<vector<string>> readCsv(string filePath);
+string getCsvValue(string filePath, int row, int col);
+int setCsvValue(string filePath, int row, int col, string setValue);
+bool appendInfoToCsv(string filePath, string info);
+bool deleteInfoFromCsv(string filePath, string keyword);
+
 class PickHandler : public osgGA::GUIEventHandler 
 { 
 public:

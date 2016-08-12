@@ -50,6 +50,7 @@ void * thread_function(void * arg) {
 			sprintf(sendMsg , "\nNow you can do next operations:\n%d. upload osg file\n%d. getViewer\n%d. Quit\nYou want to : " ,
 					option[0] , option[1] , option[2]);
 			send(*client_sockfd , sendMsg , sizeof(sendMsg), 0);
+			memset(recvMsg, 0, BUFFER_SIZE * sizeof(char));
 			RET = recv(*client_sockfd , recvMsg , sizeof(recvMsg) , 0);
 			if(RET <= 0) {
 				printf("\nConnection error!\n");
@@ -91,6 +92,50 @@ void * thread_function(void * arg) {
 
 int main() {
 ////////////
+
+	int server_master_sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if(server_master_sockfd < 0){
+		printf("server_master_socket create error!\n");
+		return 1;
+	}
+
+	struct sockaddr_in server_master_address;
+	server_master_address.sin_family = AF_INET;
+	server_master_address.sin_port = htons(MASTER_PORT);
+	server_master_address.sin_addr.s_addr = inet_addr(getCsvValue(MASTER_INFO_PATH, 0, 0).c_str());
+	
+	//设置close()后无需TIME_WAIT
+	//bool bDontLinger = false;
+	//setsockopt(client_sockfd,SOL_SOCKET,SO_DONTLINGER,(const char*)&bDontLinger,sizeof(bool));
+
+	linger lin_m;
+	lin_m.l_onoff = 1;
+	lin_m.l_linger = 0;
+	if(setsockopt(server_master_sockfd,SOL_SOCKET,SO_LINGER,(const char*)&lin_m,sizeof(linger)) == -1)
+		printf("set_so_linger error: %s\n" , strerror(errno));
+	
+	if(connect(server_master_sockfd, (struct sockaddr*)&server_master_address, sizeof(struct sockaddr_in)) < 0){
+		printf("connect error: %d, %s\n", errno, strerror(errno));
+		close(server_master_sockfd);
+		return 1;
+	}
+
+	char recvMsg[BUFFER_SIZE];
+	char sendMsg[BUFFER_SIZE];
+	string sendMsg_str = "server";
+	send(server_master_sockfd, sendMsg_str.c_str(), sendMsg_str.size(), 0);
+
+	memset(recvMsg, 0, BUFFER_SIZE * sizeof(char));
+	recv(server_master_sockfd, recvMsg, sizeof(recvMsg), 0);
+	if(strcmp(recvMsg, "get") == 0) {
+		string sendMsg_str_ip = getCsvValue(SELF_INFO_PATH, 0, 0);
+//		cout << getCsvValue(SELF_INFO_PATH, 0, 0) << endl;
+		send(server_master_sockfd, sendMsg_str_ip.c_str(), sendMsg_str_ip.size(), 0);
+//		cout << "sizeof sendIp = " << sendMsg_str_ip.size() << endl;
+	}
+
+
+
 	int server_sockfd[3], client_sockfd[3], client_len[3];
 	struct sockaddr_in server_address[3], client_address[3];
 	linger lin[3];

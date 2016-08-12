@@ -27,6 +27,8 @@ int get_All_Server_Info() {
 	getServInfo  getservinfo( , );
 }
 */
+
+/*
 char *load_Balance() {
 	int conn = MAX_CONNECTION + 1;
 	int num = getservinfo.serverinfo.getServerNum();
@@ -40,34 +42,64 @@ char *load_Balance() {
 	if(id == -1) return NULL;
    	return getservinfo.serverinfo.getServerIp(id);
 }
+*/
 
-void * client_thread_function(void * arg) {
-	int* client_sockfd = (int*)arg;
+void * server_or_client_thread_function(void * arg) {
+	int* server_or_client_sockfd = (int*)arg;
 	char sendMsg[BUFFER_SIZE];
 	char recvMsg[BUFFER_SIZE];
 	int RET = 0;
 	//负载均衡 为客户端选择最佳服务器
 	/*...*/
-	char *dest_ip = load_Balance();
-	strcpy(sendMsg , dest_ip);
+//	char *dest_ip = load_Balance();
+	memset(recvMsg, 0, BUFFER_SIZE * sizeof(char));
+	recv(* server_or_client_sockfd, recvMsg, sizeof(recvMsg), 0);
+//	cout << "sizeof recvMsg = " << sizeof(recvMsg) << endl;
+	string sendMsg_str = "get";
+
+	if(strcmp(recvMsg, "server") == 0) {
+		send(* server_or_client_sockfd, sendMsg_str.c_str(), sendMsg_str.size(), 0);
+		memset(recvMsg, 0, BUFFER_SIZE * sizeof(char));
+		recv(* server_or_client_sockfd, recvMsg, sizeof(recvMsg), 0);
+//		cout << "sizeof recvIp = " << sizeof(recvMsg) << endl;
+//		printf("%s\n", recvMsg);
+		string ip(recvMsg);
+//		cout << ip << endl;
+		addServer(ip);
+	}
+	else if(strcmp(recvMsg, "client") == 0) {
+		send(* server_or_client_sockfd, sendMsg_str.c_str(), sendMsg_str.size(), 0);
+		memset(recvMsg, 0, BUFFER_SIZE * sizeof(char));
+		recv(* server_or_client_sockfd, recvMsg, sizeof(recvMsg), 0);
+//		cout << "sizeof recvIp = " << sizeof(recvMsg) << endl;
+//		printf("%s\n", recvMsg);
+//		string ip(recvMsg);
+//		cout << ip << endl;
+//		addServer(ip);
+		send(* server_or_client_sockfd, getServerWithMinLoad().c_str(), getServerWithMinLoad().size(), 0);
+	}
+
+
+/*	string dest_ip = getServerWithMinLoad();
+	strcpy(sendMsg , dest_ip.c_str());
 	//传送匹配的服务器地址
 	send(* client_sockfd , sendMsg , sizeof(sendMsg) , 0);
 	recv(* client_sockfd , recvMsg , sizeof(recvMsg) , 0);
 	close(*client_sockfd);
-	printf("close client socket!\n");
+*/	printf("close client socket!\n");
 	printf("exit process thread!\n");
-	printf("server waiting...\n");
+	printf("master waiting...\n");
 	pthread_exit((void*)"thread exit");
 
 }
 
+/*
 void * server_thread_function(void * arg) {
 	int* server_sockfd = (int*)arg;
 	char sendMsg[BUFFER_SIZE];
 	char recvMsg[BUFFER_SIZE];
 	int RET = 0;
 	//负载均衡 为客户端选择最佳服务器
-	/*...*/
 	char *dest_ip = load_Balance();
 	strcpy(sendMsg , dest_ip);
 	//传送匹配的服务器地址
@@ -80,7 +112,7 @@ void * server_thread_function(void * arg) {
 	pthread_exit((void*)"thread exit");
 
 }
-
+*/
 int main() {
 
 	//获取所有服务器节点信息
@@ -118,6 +150,9 @@ int main() {
 	listen(master_sockfd, MAX_CONNECTION);
 
 	printf("master waiting...\n");
+
+	serverInit();
+
 	while(1) {
 		int server_or_client_len = sizeof(server_or_client_address);
 		server_or_client_sockfd = accept(master_sockfd, (struct sockaddr*)&server_or_client_address,(socklen_t *)&server_or_client_len);
@@ -130,7 +165,7 @@ int main() {
 		int res;
 		pthread_t p_thread;
 		void * thread_result;
-		res = pthread_create(&p_thread, NULL, thread_function, (void*)&client_sockfd);
+		res = pthread_create(&p_thread, NULL, server_or_client_thread_function, (void*)&server_or_client_sockfd);
 		if(res != 0){
 			printf("thread create error!\n");
 			continue;

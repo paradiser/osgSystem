@@ -1,6 +1,6 @@
-CSRCS=md5.cpp sendFile.cpp recvImage.cpp getViewer.cpp client.cpp
+CSRCS=md5.cpp dealCsv.cpp sendFile.cpp recvImage.cpp getViewer.cpp client.cpp
  
-CFLAGS =  -c -O3 -DNDEBUG -fPIC
+CFLAGS =  -c -O3 -DNDEBUG -fPIC -std=c++11
 
 INCLUDE = -I. -I/usr/include/ -I/usr/include/X11/ -I/usr/local/include/GL 
 INCOSG = -I/home/paradiser/download/OpenSceneGraph/include
