@@ -1,0 +1,19 @@
+#!/usr/bin/expect
+set timeout 5
+spawn ssh wbl@192.168.1.110
+expect {
+	"no)?" {
+		send "yes\r"
+		expect ":"
+		send "wangbenliang\r"
+	}
+	":" {
+		send "wangbenliang\r"
+	}
+}
+
+#使用nvidia-docker执行osg渲染
+expect "$"
+send ""
+
+interact

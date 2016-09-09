@@ -1,0 +1,9 @@
+#!/bin/sh
+
+cd ../shell #到expect脚本目录下
+xhost + #设置X11权限
+ls
+./make_docker.ep #执行创建docker指令，与docker交互
+exit
+
+

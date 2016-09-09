@@ -1,0 +1,14 @@
+#!/usr/bin/expect
+set timeout 6
+spawn scp -o ConnectTimeout=5 /home/paradiser/commander root@1.2.3.4:/home/paradiser/desktop/Test
+expect {
+	"no)?" {
+		send "yes\r"
+		expect "word:"
+		send "\r"
+	}
+	":" {
+		send "\r"
+	}
+}
+interact

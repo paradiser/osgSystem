@@ -1,0 +1,6 @@
+#!/bin/sh
+
+cd ../shell #到expect脚本目录下
+./get_server.ep #执行scp_file指令
+
+exit

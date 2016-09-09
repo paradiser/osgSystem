@@ -1,0 +1,33 @@
+#!/usr/bin/expect
+
+set timeout 10
+spawn ssh -X tcx@192.168.1.112
+expect {
+	"no)?" {
+		send "yes\r"
+		expect ":"
+		send "tcx\r"
+	}
+	":" {
+		send "tcx\r"
+	}
+}
+
+expect "$"
+send "sudo nvidia-docker run --rm -ti -v /etc/localtime:/etc/localtime:ro --net=host  -e DISPLAY=:10.0 -v /home/tcx/.Xauthority:/root/.Xauthority --name abc nvidia/cuda:osg\r"
+
+expect ":"
+send "tcx\r"
+
+expect ":/#"
+send "exit\r"
+
+expect ":/#"
+send "osgviewer cow.osg\r"
+
+expect ":/#"
+send "exit\r"
+
+expect "$"
+send "exit\r"
+interact
